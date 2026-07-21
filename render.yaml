@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: safi-budget
+    env: go
+    plan: free
+    buildCommand: go build -o safi-budget ./cmd/safi-budget
+    startCommand: ./safi-budget
+    envVars:
+      - key: PORT
+        value: 10000

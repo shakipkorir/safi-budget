@@ -1,0 +1,46 @@
+========================================================================
+            COMPREHENSIVE PROJECT SOLUTION SPECIFICATION
+========================================================================
+PROJECT NAME       : Safi-Budget CLI Personal Ledger System
+DEVELOPER          : Shadrack Kipkorir
+DEVELOPMENT STAGE  : Production-Ready / Finalized Standalone Build
+TARGET ENVIRONMENT : Go (Golang) Runtime
+STABILITY RATING   : Stable - Input Buffer Handled
+
+------------------------------------------------------------------------
+1. ARCHITECTURAL DESIGN & DATA FLOW
+------------------------------------------------------------------------
+The Safi-Budget application is designed as a standalone, single-user CLI 
+financial tracking application. It manages monetary resources by breaking 
+down a user's monthly salary into fixed budget categories using a modified 
+50/30/20 framework (Needs, Wants, and Savings). 
+
+The Needs budget is strictly partitioned into explicit sub-envelopes:
+- Rent Allocation
+- Food Allocation
+- Transport Allocation
+- Utilities Allocation
+
+Data transitions occur dynamically: when an expense is logged against an 
+envelope, the system validates the request, modifies the floating-point balance 
+in memory, updates the historical ledger array, and flushes the entire structure 
+synchronously back to the non-volatile state storage file ('budget.json').
+
+------------------------------------------------------------------------
+2. ENGINE INDEPENDENCE & FAULT TOLERANCE
+------------------------------------------------------------------------
+To resolve standard shell terminal freeze conditions common within native Windows 
+PowerShell environments, this implementation completely replaces standard 
+`fmt.Scanln` pointer assignment operations with structured `bufio.Scanner` engines.
+The input stream reads lines globally, strips carriage returns ('\r' and '\n'), 
+and safely converts string inputs into clean floats/integers.
+
+------------------------------------------------------------------------
+3. DATA SCHEMAS & STORAGE REPOSITORY MAPPING
+------------------------------------------------------------------------
+The system schema is bound to 'budget.json'. It ensures total isolation 
+from external team repositories by operating strictly within its own local root.
+Historical data blocks append micro-timestamped elements directly into the 
+JSON file, preventing mathematical regressions or negative allocation balance 
+overflows. All operations compile natively without external dependencies.
+========================================================================

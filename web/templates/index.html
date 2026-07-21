@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Safi Budget">
+    <link rel="manifest" href="/manifest.json">
+    <title>Safi Budget Engine</title>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(console.error);
+            });
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --navy-dark: #0f172a;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --border-color: #e2e8f0;
+            --text-muted: #64748b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            max-width: 100%;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+        }
+        .engine-container {
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Profile Drawer Button & Panel */
+        .profile-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .drawer {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            z-index: 100;
+            padding: 30px 20px;
+            box-sizing: border-box;
+        }
+        .drawer.active {
+            display: block;
+        }
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            float: right;
+            cursor: pointer;
+        }
+
+        h2.title {
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--navy-dark);
+            margin: 0 0 4px 0;
+            letter-spacing: 0.5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        /* Banner Box */
+        .banner {
+            background: var(--navy-dark);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .banner-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .banner-amount {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 16px;
+        }
+        .banner-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            border-top: 1px solid #1e293b;
+            padding-top: 14px;
+        }
+        .banner-stat-label {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+        .banner-stat-val {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Breakdown section */
+        .breakdown-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .breakdown-list {
+            margin-bottom: 24px;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Status Indicator Banner */
+        .status-banner {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        /* Forms */
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--navy-dark);
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-orange {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-full {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .flex-row input {
+            margin-bottom: 0;
+        }
+
+        .section-separator {
+            margin: 24px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Password container with toggle */
+        .password-container {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Advisor Investment Section */
+        .advisor-box {
+            background: #fafdfd;
+            border: 1.5px solid #ccfbf1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+        .advisor-title {
+            color: #0f766e;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIGNUP VIEW -->
+    {{if eq .View "signup"}}
+    <div class="container">
+        <div class="card">
+            <h2 class="title">Safi Budget</h2>
+            <p class="subtitle">Create your account</p>
+
+            {{if .Error}}
+                <div style="background:#fef2f2; color:#b91c1c; padding:10px; border-radius:6px; margin-bottom:15px; font-size:13px; text-align:center;">⚠️ {{.Error}}</div>
+            {{end}}
+
+            <form method="POST" action="/signup">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Username" required>
+
+                <label for="full_names">Full Names</label>
+                <input type="text" id="full_names" name="full_names" placeholder="Your full names" required>
+
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="example@mail.com" required>
+
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" placeholder="0712345678" required>
+
+                <label for="password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Enter secure password" required>
+                    <button type="button" class="password-toggle" onclick="togglePass('password')">👁️</button>
+                </div>
+
+                <label for="confirm_password">Confirm Password</label>
+                <div class="password-container">
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Verify password" required>
+                    <button type="button" class="password-toggle" onclick="togglePass('confirm_password')">👁️</button>
+                </div>
+
+                <button type="submit" class="btn-primary btn-full" style="margin-top: 10px;">Sign Up</button>
+            </form>
+            <p style="text-align:center; font-size:13px; margin-top:15px; color:var(--text-muted);">
+                Already have an account? <a href="/login" style="color:var(--primary-color); text-decoration:none; font-weight:600;">Login</a>
+            </p>
+        </div>
+    </div>
+    <script>
+        function togglePass(id) {
+            var x = document.getElementById(id);
+            if (x.type === "password") { x.type = "text"; } else { x.type = "password"; }
+        }
+    </script>
+    {{end}}
+
+    <!-- LOGIN VIEW -->
+    {{if eq .View "login"}}
+    <div class="container">
+        <div class="card">
+            <h2 class="title">Safi Budget</h2>
+            <p class="subtitle">Securely log in</p>
+
+            {{if .Error}}
+                <div style="background:#fef2f2; color:#b91c1c; padding:10px; border-radius:6px; margin-bottom:15px; font-size:13px; text-align:center;">⚠️ {{.Error}}</div>
+            {{end}}
+
+            <form method="POST" action="/login">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter username" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+
+                <button type="submit" class="btn-primary btn-full">Login</button>
+            </form>
+            <p style="text-align:center; font-size:13px; margin-top:15px; color:var(--text-muted);">
+                New user? <a href="/signup" style="color:var(--primary-color); text-decoration:none; font-weight:600;">Sign up</a>
+            </p>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- DASHBOARD VIEW -->
+    {{if eq .View "dashboard"}}
+    <div class="engine-container">
+        <!-- Drawer Menu Button -->
+        <button class="profile-btn" onclick="toggleDrawer()">👤</button>
+
+        <!-- Slide-out Profile Drawer -->
+        <div id="profileDrawer" class="drawer">
+            <button class="drawer-close" onclick="toggleDrawer()">×</button>
+            <h3 style="margin-top:20px; color:var(--navy-dark);">Profile Settings</h3>
+            <hr style="border:0; border-top:1px solid var(--border-color); margin-bottom:20px;">
+            <form method="POST" action="/profile-update">
+                <input type="hidden" name="username" value="{{.Username}}">
+                
+                <label>Username</label>
+                <p style="background:#f1f5f9; padding:8px 12px; border-radius:6px; margin-bottom:16px; font-size:14px; font-weight:600;">{{.Username}}</p>
+
+                <label for="edit_full_names">Full Names</label>
+                <input type="text" id="edit_full_names" name="full_names" value="{{.FullNames}}" required>
+
+                <label for="edit_email">Email</label>
+                <input type="email" id="edit_email" name="email" value="{{.Email}}" required>
+
+                <label for="edit_phone">Phone</label>
+                <input type="text" id="edit_phone" name="phone" value="{{.Phone}}" required>
+
+                <label for="currency">Search base currency</label>
+                <input id="currency" name="currency" list="currency-list" value="{{.Currency}}" placeholder="Type a currency code like USD, EUR, KES, JPY, INR..." required>
+                <datalist id="currency-list">
+                    <option value="AED">UAE Dirham (AED)</option>
+                    <option value="AFN">Afghan Afghani (AFN)</option>
+                    <option value="ALL">Albanian Lek (ALL)</option>
+                    <option value="AMD">Armenian Dram (AMD)</option>
+                    <option value="AOA">Angolan Kwanza (AOA)</option>
+                    <option value="ARS">Argentine Peso (ARS)</option>
+                    <option value="AUD">Australian Dollar (AUD)</option>
+                    <option value="AZN">Azerbaijani Manat (AZN)</option>
+                    <option value="BAM">Bosnia and Herzegovina Convertible Mark (BAM)</option>
+                    <option value="BDT">Bangladeshi Taka (BDT)</option>
+                    <option value="BGN">Bulgarian Lev (BGN)</option>
+                    <option value="BHD">Bahraini Dinar (BHD)</option>
+                    <option value="BIF">Burundian Franc (BIF)</option>
+                    <option value="BND">Brunei Dollar (BND)</option>
+                    <option value="BOB">Bolivian Boliviano (BOB)</option>
+                    <option value="BRL">Brazilian Real (BRL)</option>
+                    <option value="BSD">Bahamian Dollar (BSD)</option>
+                    <option value="BTN">Bhutanese Ngultrum (BTN)</option>
+                    <option value="BWP">Botswana Pula (BWP)</option>
+                    <option value="BYN">Belarusian Ruble (BYN)</option>
+                    <option value="CAD">Canadian Dollar (CAD)</option>
+                    <option value="CDF">Congolese Franc (CDF)</option>
+                    <option value="CHF">Swiss Franc (CHF)</option>
+                    <option value="CLP">Chilean Peso (CLP)</option>
+                    <option value="CNY">Chinese Yuan (CNY)</option>
+                    <option value="COP">Colombian Peso (COP)</option>
+                    <option value="CRC">Costa Rican Colón (CRC)</option>
+                    <option value="CUP">Cuban Peso (CUP)</option>
+                    <option value="CVE">Cape Verdean Escudo (CVE)</option>
+                    <option value="CZK">Czech Koruna (CZK)</option>
+                    <option value="DJF">Djiboutian Franc (DJF)</option>
+                    <option value="DKK">Danish Krone (DKK)</option>
+                    <option value="DOP">Dominican Peso (DOP)</option>
+                    <option value="DZD">Algerian Dinar (DZD)</option>
+                    <option value="EGP">Egyptian Pound (EGP)</option>
+                    <option value="ERN">Eritrean Nakfa (ERN)</option>
+                    <option value="ETB">Ethiopian Birr (ETB)</option>
+                    <option value="EUR">Euro (EUR)</option>
+                    <option value="FJD">Fijian Dollar (FJD)</option>
+                    <option value="FKP">Falkland Islands Pound (FKP)</option>
+                    <option value="GBP">British Pound (GBP)</option>
+                    <option value="GEL">Georgian Lari (GEL)</option>
+                    <option value="GHS">Ghanaian Cedi (GHS)</option>
+                    <option value="GIP">Gibraltar Pound (GIP)</option>
+                    <option value="GMD">Gambian Dalasi (GMD)</option>
+                    <option value="GNF">Guinean Franc (GNF)</option>
+                    <option value="GTQ">Guatemalan Quetzal (GTQ)</option>
+                    <option value="GYD">Guyanese Dollar (GYD)</option>
+                    <option value="HKD">Hong Kong Dollar (HKD)</option>
+                    <option value="HNL">Honduran Lempira (HNL)</option>
+                    <option value="HRK">Croatian Kuna (HRK)</option>
+                    <option value="HTG">Haitian Gourde (HTG)</option>
+                    <option value="HUF">Hungarian Forint (HUF)</option>
+                    <option value="IDR">Indonesian Rupiah (IDR)</option>
+                    <option value="ILS">Israeli New Shekel (ILS)</option>
+                    <option value="INR">Indian Rupee (INR)</option>
+                    <option value="IQD">Iraqi Dinar (IQD)</option>
+                    <option value="IRR">Iranian Rial (IRR)</option>
+                    <option value="ISK">Icelandic Króna (ISK)</option>
+                    <option value="JMD">Jamaican Dollar (JMD)</option>
+                    <option value="JPY">Japanese Yen (JPY)</option>
+                    <option value="KES">Kenyan Shilling (KES)</option>
+                    <option value="KGS">Kyrgystani Som (KGS)</option>
+                    <option value="KHR">Cambodian Riel (KHR)</option>
+                    <option value="KMF">Comorian Franc (KMF)</option>
+                    <option value="KPW">North Korean Won (KPW)</option>
+                    <option value="KRW">South Korean Won (KRW)</option>
+                    <option value="KWD">Kuwaiti Dinar (KWD)</option>
+                    <option value="KYD">Cayman Islands Dollar (KYD)</option>
+                    <option value="KZT">Kazakhstani Tenge (KZT)</option>
+                    <option value="LAK">Lao Kip (LAK)</option>
+                    <option value="LBP">Lebanese Pound (LBP)</option>
+                    <option value="LKR">Sri Lankan Rupee (LKR)</option>
+                    <option value="LRD">Liberian Dollar (LRD)</option>
+                    <option value="LSL">Lesotho Loti (LSL)</option>
+                    <option value="LYD">Libyan Dinar (LYD)</option>
+                    <option value="MAD">Moroccan Dirham (MAD)</option>
+                    <option value="MDL">Moldovan Leu (MDL)</option>
+                    <option value="MGA">Malagasy Ariary (MGA)</option>
+                    <option value="MKD">Macedonian Denar (MKD)</option>
+                    <option value="MMK">Myanmar Kyat (MMK)</option>
+                    <option value="MNT">Mongolian Tögrög (MNT)</option>
+                    <option value="MOP">Macanese Pataca (MOP)</option>
+                    <option value="MRU">Mauritanian Ouguiya (MRU)</option>
+                    <option value="MUR">Mauritian Rupee (MUR)</option>
+                    <option value="MVR">Maldivian Rufiyaa (MVR)</option>
+                    <option value="MWK">Malawian Kwacha (MWK)</option>
+                    <option value="MXN">Mexican Peso (MXN)</option>
+                    <option value="MYR">Malaysian Ringgit (MYR)</option>
+                    <option value="MZN">Mozambican Metical (MZN)</option>
+                    <option value="NAD">Namibian Dollar (NAD)</option>
+                    <option value="NGN">Nigerian Naira (NGN)</option>
+                    <option value="NIO">Nicaraguan Córdoba (NIO)</option>
+                    <option value="NOK">Norwegian Krone (NOK)</option>
+                    <option value="NPR">Nepalese Rupee (NPR)</option>
+                    <option value="NZD">New Zealand Dollar (NZD)</option>
+                    <option value="OMR">Omani Rial (OMR)</option>
+                    <option value="PAB">Panamanian Balboa (PAB)</option>
+                    <option value="PEN">Peruvian Sol (PEN)</option>
+                    <option value="PGK">Papua New Guinean Kina (PGK)</option>
+                    <option value="PHP">Philippine Peso (PHP)</option>
+                    <option value="PKR">Pakistani Rupee (PKR)</option>
+                    <option value="PLN">Polish Złoty (PLN)</option>
+                    <option value="PYG">Paraguayan Guaraní (PYG)</option>
+                    <option value="QAR">Qatari Riyal (QAR)</option>
+                    <option value="RON">Romanian Leu (RON)</option>
+                    <option value="RSD">Serbian Dinar (RSD)</option>
+                    <option value="RUB">Russian Ruble (RUB)</option>
+                    <option value="RWF">Rwandan Franc (RWF)</option>
+                    <option value="SAR">Saudi Riyal (SAR)</option>
+                    <option value="SBD">Solomon Islands Dollar (SBD)</option>
+                    <option value="SCR">Seychellois Rupee (SCR)</option>
+                    <option value="SDG">Sudanese Pound (SDG)</option>
+                    <option value="SEK">Swedish Krona (SEK)</option>
+                    <option value="SGD">Singapore Dollar (SGD)</option>
+                    <option value="SHP">Saint Helena Pound (SHP)</option>
+                    <option value="SLE">Sierra Leonean Leone (SLE)</option>
+                    <option value="SOS">Somali Shilling (SOS)</option>
+                    <option value="SRD">Surinamese Dollar (SRD)</option>
+                    <option value="STN">São Tomé and Príncipe Dobra (STN)</option>
+                    <option value="SVC">Salvadoran Colón (SVC)</option>
+                    <option value="SYP">Syrian Pound (SYP)</option>
+                    <option value="SZL">Eswatini Lilangeni (SZL)</option>
+                    <option value="THB">Thai Baht (THB)</option>
+                    <option value="TJS">Tajikistani Somoni (TJS)</option>
+                    <option value="TMT">Turkmenistan Manat (TMT)</option>
+                    <option value="TND">Tunisian Dinar (TND)</option>
+                    <option value="TOP">Tongan Paʻanga (TOP)</option>
+                    <option value="TRY">Turkish Lira (TRY)</option>
+                    <option value="TTD">Trinidad and Tobago Dollar (TTD)</option>
+                    <option value="TWD">New Taiwan Dollar (TWD)</option>
+                    <option value="TZS">Tanzanian Shilling (TZS)</option>
+                    <option value="UAH">Ukrainian Hryvnia (UAH)</option>
+                    <option value="UGX">Ugandan Shilling (UGX)</option>
+                    <option value="USD">US Dollar (USD)</option>
+                    <option value="UYU">Uruguayan Peso (UYU)</option>
+                    <option value="UZS">Uzbekistani Sum (UZS)</option>
+                    <option value="VED">Venezuelan Bolívar Digital (VED)</option>
+                    <option value="VES">Venezuelan Bolívar Soberano (VES)</option>
+                    <option value="VND">Vietnamese Dong (VND)</option>
+                    <option value="VUV">Vanuatu Vatu (VUV)</option>
+                    <option value="WST">Samoan Tala (WST)</option>
+                    <option value="XAF">Central African CFA Franc (XAF)</option>
+                    <option value="XCD">East Caribbean Dollar (XCD)</option>
+                    <option value="XOF">West African CFA Franc (XOF)</option>
+                    <option value="XPF">CFP Franc (XPF)</option>
+                    <option value="YER">Yemeni Rial (YER)</option>
+                    <option value="ZAR">South African Rand (ZAR)</option>
+                    <option value="ZMW">Zambian Kwacha (ZMW)</option>
+                    <option value="ZWL">Zimbabwean Dollar (ZWL)</option>
+                </datalist>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-8px; margin-bottom:14px;">Type any official currency code and the app will use it as your base currency.</p>
+
+                <button type="submit" class="btn-primary btn-full">Save Changes</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <!-- Dynamic Greetings based on currency -->
+            <h3 style="margin: 0; color: var(--primary-color); font-size: 14px; font-weight: 700; text-transform: uppercase;">
+                {{.Greeting}}, {{.DisplayName}}!
+            </h3>
+            <h2 class="title" style="text-align: left; margin-top: 4px;">Safi Budget Engine</h2>
+            <p class="subtitle" style="text-align: left; margin-bottom: 24px;">Dynamic 50/30/20 Cascade System</p>
+
+            <!-- Banner Box -->
+            <div class="banner">
+                <div class="banner-label">Total Net Revenue</div>
+                <div class="banner-amount">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .NetIncome}}</div>
+                <div class="banner-grid">
+                    <div>
+                        <div class="banner-stat-label">Needs (50%)</div>
+                        <div class="banner-stat-val" style="color:var(--primary-color);">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.0f" .Needs}}</div>
+                    </div>
+                    <div>
+                        <div class="banner-stat-label">Wants (30%)</div>
+                        <div class="banner-stat-val" style="color:var(--accent-orange);">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.0f" .Wants}}</div>
+                    </div>
+                    <div>
+                        <div class="banner-stat-label">Savings (20%)</div>
+                        <div class="banner-stat-val" style="color:var(--accent-green);">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.0f" .BaseSavings}}</div>
+                    </div>
+                    <div>
+                        <div class="banner-stat-label">Investable</div>
+                        <div class="banner-stat-val" style="color:#0f766e;">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.0f" .TotalInvestable}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Needs Cascade Breakdown -->
+            <div class="breakdown-title">Needs Allocation Breakdown</div>
+            <div class="breakdown-list">
+                <div class="breakdown-item">
+                    <span>🏠 Rent Budget (40%):</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .RentAlloc}}</strong>
+                </div>
+                <div class="breakdown-item">
+                    <span>🍲 Food Budget (30%):</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .FoodAlloc}}</strong>
+                </div>
+                <div class="breakdown-item">
+                    <span>🚌 Transport Budget (15%):</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .TransAlloc}}</strong>
+                </div>
+                <div class="breakdown-item">
+                    <span>💡 Utilities Budget (15%):</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .UtilsAlloc}}</strong>
+                </div>
+            </div>
+
+            <div class="breakdown-title" style="color: var(--accent-orange); margin-top: 16px;">Rent Tracker</div>
+            <div class="breakdown-list">
+                <div class="breakdown-item">
+                    <span>🏠 Rent Budget</span>
+                    <strong style="color: #475569;">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .RentAlloc}}</strong>
+                </div>
+                <div class="breakdown-item" style="padding-top: 4px; font-size: 13px; color: #475569;">
+                    <span>Actual rent paid</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .SpentRent}}</strong>
+                </div>
+                <div class="breakdown-item" style="padding-top: 4px; font-size: 13px; color: #475569;">
+                    <span>Added to savings</span>
+                    <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .LeftoverRent}}</strong>
+                </div>
+            </div>
+            {{if .OverspentRent}}
+            <div style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:10px; border-radius:8px; font-size:13px; font-weight:600; margin-top:10px;">
+                ⚠️ Rent overspend alert: you have spent {{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .RentExcess}} above the rent budget. This warning will remain until you reduce the payment to the budget or below.
+            </div>
+            {{end}}
+
+            <div class="status-banner">
+                🟢 System Operational: Balanced Ledger
+            </div>
+
+            <!-- Log Revenue Stream -->
+            <form method="POST" action="/update-revenue?user={{.Username}}" style="margin-bottom: 24px;">
+                <label>Log Revenue Stream</label>
+                <select name="income_source" style="margin-bottom:10px;">
+                    <option value="Salary" {{if eq .IncomeSource "Salary"}}selected{{end}}>Salary</option>
+                    <option value="Business" {{if eq .IncomeSource "Business"}}selected{{end}}>Business</option>
+                    <option value="Freelance" {{if eq .IncomeSource "Freelance"}}selected{{end}}>Freelance</option>
+                    <option value="Combined" {{if eq .IncomeSource "Combined"}}selected{{end}}>Combined</option>
+                </select>
+                <div class="flex-row">
+                    <input type="number" step="0.01" name="income" placeholder="Enter Income ({{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}})" required>
+                    <select name="is_taxed" style="max-width: 140px; margin-bottom:0;">
+                        <option value="true">Tax already deducted</option>
+                        <option value="false">Tax not deducted</option>
+                    </select>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+                <input type="number" step="1" name="tax_rate" placeholder="Tax % (if not deducted)" style="margin-top: -6px;" value="0">
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-8px; margin-bottom:12px;">Once saved, the updated income will appear in the summary above.</p>
+            </form>
+
+            <form method="POST" action="/deduct-expense?user={{.Username}}">
+                <label>Log Expenditure Tracking</label>
+                <select name="target" style="margin-bottom:10px;">
+                    <option value="rent">Rent Envelope (🏠)</option>
+                    <option value="food">Food Envelope (🍲)</option>
+                    <option value="transport">Transport Envelope (🚌)</option>
+                    <option value="utilities">Utilities Envelope (💡)</option>
+                </select>
+                <div class="flex-row">
+                    <input type="number" step="0.01" name="expense" placeholder="Enter Expense Amount" required>
+                    <button type="submit" class="btn-orange">Deduct</button>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-8px; margin-bottom:0;">You can update the amount again later if your spending changes.</p>
+            </form>
+
+            <!-- Reset -->
+            <form method="POST" action="/reset?user={{.Username}}" style="margin-top: 16px;" onsubmit="return confirm('Are you sure you want to clear your budget?');">
+                <button type="submit" style="background:#f1f5f9; color:var(--text-muted); border:1px solid var(--border-color);" class="btn-full">Reset System Ledger & Purge Cache</button>
+            </form>
+
+            <!-- Safi Wealth Advisor -->
+            <div class="advisor-box">
+                <h3 class="advisor-title">💡 Safi Wealth Advisor</h3>
+                
+                {{if le .RawIncome 0.0}}
+                    <p style="color:var(--text-muted); font-size:13px; margin:0; font-style:italic;">Please log a revenue stream to initialize your dynamic asset allocation recommendations.</p>
+                {{else}}
+                    <p style="color:#334155; font-size:13px; margin-top:0; line-height: 1.5;">
+                        Your base savings target is <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .BaseSavings}}</strong> (20% of net income). If you spend less than your rent budget, the unused portion is added to your savings balance.
+                        {{if gt .LeftoverRent 0.0}}
+                            <br><span style="color:var(--accent-green); font-weight:700;">🔥 Carry-over added: {{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .LeftoverRent}} from your rent envelope is now part of your savings balance.</span>
+                        {{end}}
+                    </p>
+                    <p style="color:#334155; font-size:13px;">{{.AdvisorIntro}}</p>
+                    <p style="color:#334155; font-size:13px;">Your current total savings and investment balance is <strong>{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .SavingsBalance}}</strong>. A practical starting point is to split it across savings and investment options based on your goals, timeline, and liquidity needs:</p>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr; gap:12px; margin-top:12px;">
+                        <div style="background:white; border:1px solid #ccfbf1; padding:12px; border-radius:8px;">
+                            <strong style="color:#0f766e; font-size:13px;">🏛️ {{.AdvisorSaccoTitle}} (40%)</strong>
+                            <div style="font-size:16px; font-weight:800; color:#0d9488; margin:4px 0;">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .SaccoAlloc}}</div>
+                            <p style="font-size:11px; color:var(--text-muted); margin: 0; line-height: 1.4;">{{.AdvisorSaccoBody}}</p>
+                        </div>
+                        
+                        <div style="background:white; border:1px solid #ccfbf1; padding:12px; border-radius:8px;">
+                            <strong style="color:#0f766e; font-size:13px;">📈 {{.AdvisorMmfTitle}} (30%)</strong>
+                            <div style="font-size:16px; font-weight:800; color:#0d9488; margin:4px 0;">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .MmfAlloc}}</div>
+                            <p style="font-size:11px; color:var(--text-muted); margin: 0; line-height: 1.4;">{{.AdvisorMmfBody}}</p>
+                        </div>
+
+                        <div style="background:white; border:1px solid #ccfbf1; padding:12px; border-radius:8px;">
+                            <strong style="color:#0f766e; font-size:13px;">📊 {{.AdvisorTBillTitle}} (30%)</strong>
+                            <div style="font-size:16px; font-weight:800; color:#0d9488; margin:4px 0;">{{if .CurrencySymbol}}{{.CurrencySymbol}}{{else}}{{.Currency}}{{end}} {{printf "%.2f" .TBillAlloc}}</div>
+                            <p style="font-size:11px; color:var(--text-muted); margin: 0; line-height: 1.4;">{{.AdvisorTBillBody}}</p>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function toggleDrawer() {
+            document.getElementById("profileDrawer").classList.toggle("active");
+        }
+    </script>
+    {{end}}
+
+</body>
+</html>

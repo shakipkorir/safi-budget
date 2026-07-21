@@ -1,0 +1,14 @@
+[
+  {
+    "description": "Food",
+    "amount": 5000,
+    "category": "General",
+    "date": "2026-07-07T14:21:37.0112245+03:00"
+  },
+  {
+    "description": "Rent",
+    "amount": 16500,
+    "category": "Rent",
+    "date": "2026-07-07T15:07:05.566594+03:00"
+  }
+]
