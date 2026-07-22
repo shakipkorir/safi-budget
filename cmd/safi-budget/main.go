@@ -19,6 +19,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/signup", budgetApp.HandleSignup)
 	mux.HandleFunc("/login", budgetApp.HandleLogin)
+	mux.HandleFunc("/logout", budgetApp.HandleLogout)
 	mux.HandleFunc("/dashboard", budgetApp.HandleDashboard)
 	mux.HandleFunc("/update-revenue", budgetApp.HandleUpdateRevenue)
 	mux.HandleFunc("/deduct-expense", budgetApp.HandleDeductExpense)

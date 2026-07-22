@@ -364,7 +364,7 @@ func (app *BudgetApp) HandleSignup(w http.ResponseWriter, r *http.Request) {
 			IncomeSource: "Salary",
 			IsTaxed:      true,
 			TaxRate:      0.0,
-			Currency:     "KSh",
+			Currency:     "KES",
 		}
 		if err := app.saveUsers(); err != nil {
 			log.Printf("failed to save users: %v", err)
@@ -412,6 +412,10 @@ func (app *BudgetApp) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 		http.Redirect(w, r, "/dashboard?user="+username, http.StatusSeeOther)
 	}
+}
+
+func (app *BudgetApp) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (app *BudgetApp) HandleUpdateRevenue(w http.ResponseWriter, r *http.Request) {
